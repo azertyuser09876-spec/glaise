@@ -1,0 +1,12 @@
+{
+  "name": "Glaise",
+  "short_name": "Glaise",
+  "description": "Extraction shooter voxel post-apocalyptique entre amis",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0e110f",
+  "theme_color": "#121512",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

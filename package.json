@@ -1,0 +1,13 @@
+{
+  "name": "glaise",
+  "version": "1.0.0",
+  "description": "Extraction shooter voxel post-apocalyptique, multijoueur, dans le navigateur",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build:exe": "npm install --no-save --no-package-lock esbuild@0.24.0 postject@1.0.0-alpha.6 rcedit@4.0.1 && node build/sea.mjs"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

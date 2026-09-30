@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Glaise</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#121512">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <div id="labels"></div>
+
+  <!-- Interface en jeu -->
+  <div id="hud" class="hidden">
+    <div id="water-tint"></div>
+    <div id="vignette"></div>
+    <div id="scope" class="hidden"><div class="ring"></div><div class="rh"></div><div class="rv"></div><div class="rdot"></div></div>
+    <div id="dot" class="hidden"></div>
+    <div id="crosshair"><i class="ch t"></i><i class="ch b"></i><i class="ch l"></i><i class="ch r"></i><i class="cd"></i></div>
+    <div id="hitmarker"><i></i><i></i><i></i><i></i></div>
+    <div id="dmg-dirs"></div>
+    <div id="compass"><div id="compass-in"></div><div class="compass-mid"></div></div>
+    <div id="raid-timer"></div>
+    <div id="extract-box" class="hidden"><div id="extract-text"></div><div class="bar"><i id="extract-bar"></i></div></div>
+    <div id="prompt"></div>
+    <div id="chat"><div id="chat-log"></div><input id="chat-input" maxlength="200" autocomplete="off" spellcheck="false" placeholder="Message ou /aide"></div>
+    <div id="debug" class="hidden"></div>
+    <div id="players" class="hidden"></div>
+    <div id="toast"></div>
+    <div id="status"></div>
+    <div id="ammo" class="hidden"><div id="ammo-count"></div><div id="ammo-info"></div></div>
+    <div id="touch"></div>
+    <div id="bottom">
+      <div id="held-name"></div>
+      <div id="bars">
+        <div class="sbar hp"><i id="hp-fill"></i><span id="hp-txt"></span></div>
+        <div class="sbar food"><i id="food-fill"></i><span id="food-txt"></span></div>
+      </div>
+      <div id="hotbar"></div>
+    </div>
+  </div>
+
+  <!-- Sac en raid : fabrication, armurerie, fouille -->
+  <div id="inventory" class="hidden screen dim">
+    <div class="panel inv-panel">
+      <section class="inv-left">
+        <div class="panel-head"><h2>Sac de raid</h2><button id="inv-close" class="close" aria-label="Fermer">✕</button></div>
+        <div class="eq-row">
+          <div class="eq"><span>Casque</span><div id="inv-eq-h" class="grid g1"></div></div>
+          <div class="eq"><span>Gilet</span><div id="inv-eq-v" class="grid g1"></div></div>
+          <div class="eq-info" id="inv-eq-info"></div>
+        </div>
+        <div id="inv-main" class="grid"></div>
+        <h3>Barre d'action</h3>
+        <div id="inv-hot" class="grid"></div>
+        <p class="hint">Clic : prendre / poser · Clic droit : moitié / un · Maj+clic : ranger ou transférer · Cliquer hors du sac : jeter</p>
+      </section>
+      <section class="inv-right">
+        <div class="tabs" id="inv-tabs"></div>
+        <div id="inv-body" class="tab-body"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Planque (entre les raids) -->
+  <div id="hideout" class="hidden screen">
+    <div class="ho">
+      <header class="ho-head">
+        <div class="ho-title">Planque</div>
+        <div class="ho-money"><b id="ho-money">0</b> écus</div>
+        <div id="ho-stats"></div>
+        <div class="ho-actions"><button id="ho-kit">Kit de survie</button><button id="ho-deploy" class="primary">Partir en raid</button></div>
+      </header>
+      <nav id="ho-views"><button data-v="stash" class="on">Planque</button><button data-v="side">Marchand · Armurerie · Atelier</button></nav>
+      <div class="ho-body">
+        <section class="ho-col ho-bag">
+          <h2>Sac de raid</h2>
+          <div class="eq-row">
+            <div class="eq"><span>Casque</span><div id="h-eq-h" class="grid g1"></div></div>
+            <div class="eq"><span>Gilet</span><div id="h-eq-v" class="grid g1"></div></div>
+            <div class="eq-info" id="h-eq-info"></div>
+          </div>
+          <div id="h-main" class="grid"></div>
+          <h3>Barre d'action</h3>
+          <div id="h-hot" class="grid"></div>
+          <p class="hint">Tout ce qui est dans le sac part en raid… et se perd si vous mourez.</p>
+        </section>
+        <section class="ho-col ho-stash">
+          <h2>Planque <small id="h-stash-count"></small></h2>
+          <div id="h-stash" class="grid stash"></div>
+          <p class="hint">En sécurité ici. Maj+clic : transférer · Ctrl+clic : vendre au marchand</p>
+        </section>
+        <section class="ho-col ho-right">
+          <div class="tabs" id="ho-tabs"></div>
+          <div id="ho-body" class="tab-body"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div id="raid-end" class="hidden screen dim">
+    <div class="center-box re-box">
+      <h1 id="re-title"></h1>
+      <p id="re-text"></p>
+      <div id="re-stats"></div>
+      <button id="re-back" class="primary">Retour à la planque</button>
+    </div>
+  </div>
+
+  <div id="map" class="hidden screen dim">
+    <div class="panel map-box">
+      <div class="panel-head"><h2>Carte du secteur</h2><button id="map-close" class="close" aria-label="Fermer">✕</button></div>
+      <canvas id="map-canvas" width="512" height="512"></canvas>
+      <div id="map-legend"><span class="lg ex">Zone d'extraction</span><span class="lg mh">Maison</span><span class="lg ca">Camp militaire</span><span class="lg bu">Bunker</span><span class="lg to">Ville</span><span class="lg me">Vous</span></div>
+      <p class="hint">M ou Échap pour fermer</p>
+    </div>
+  </div>
+
+  <div id="cursor-stack"></div>
+  <div id="tooltip" class="hidden"></div>
+
+  <!-- Menu principal -->
+  <div id="menu" class="screen">
+    <div class="menu-col">
+      <div class="brand">
+        <h1 class="logo">Glaise</h1>
+        <div class="brand-sub">Zone d'exclusion &middot; extraction</div>
+      </div>
+      <p class="tagline">Entrez. Pillez. Sortez vivant.</p>
+      <label class="field">Pseudo
+        <input id="name" maxlength="16" autocomplete="off" spellcheck="false" autocapitalize="off" enterkeyhint="go">
+      </label>
+      <button id="play" class="primary" disabled>Connexion…</button>
+      <p id="menu-status"></p>
+      <div class="share">
+        <span>Adresse à donner à vos amis</span>
+        <div id="addr-rows"><div class="addr-row"><code id="addr"></code><button id="copy" class="small">Copier</button></div></div>
+        <p class="note" id="addr-note">Vos amis ouvrent cette adresse dans leur navigateur ou dans l'application Android.</p>
+      </div>
+      <details class="join">
+        <summary>Rejoindre un autre serveur</summary>
+        <div class="addr-row"><input id="join-url" placeholder="http://192.168.1.20:8080" autocomplete="off" spellcheck="false" autocapitalize="off" enterkeyhint="go"><button id="join-go" class="small">Aller</button></div>
+      </details>
+      <details class="help">
+        <summary>Commandes</summary>
+        <dl class="kb">
+          <dt>ZQSD / WASD</dt><dd>se déplacer &middot; Maj : sprinter &middot; C : s'accroupir</dd>
+          <dt>Clic gauche</dt><dd>tirer, miner, frapper</dd>
+          <dt>Clic droit</dt><dd>viser, poser, manger ou se soigner (maintenir)</dd>
+          <dt>R &middot; B &middot; L</dt><dd>recharger &middot; mode de tir &middot; lampe</dd>
+          <dt>F</dt><dd>fouiller une caisse ou un corps</dd>
+          <dt>E &middot; M</dt><dd>sac et armurerie &middot; carte</dd>
+          <dt>1–9, molette</dt><dd>choisir l'objet &middot; A (Q en QWERTY) : jeter</dd>
+          <dt>T &middot; V &middot; Tab</dt><dd>discuter &middot; troisième personne &middot; joueurs</dd>
+        </dl>
+        <dl class="tc">
+          <dt>Pouce gauche</dt><dd>joystick (poussé à fond : sprint)</dd>
+          <dt>Pouce droit</dt><dd>glisser pour regarder ; le bouton de tir sert aussi à viser</dd>
+          <dt>Boutons</dt><dd>viser (bascule), sauter, s'accroupir, recharger, fouiller</dd>
+          <dt>En haut</dt><dd>pause, carte, sac, discussion, vue</dd>
+          <dt>Inventaire</dt><dd>toucher : prendre / poser &middot; appui long : transfert rapide</dd>
+        </dl>
+      </details>
+    </div>
+  </div>
+
+  <div id="loading" class="hidden screen dim">
+    <div class="load-box">
+      <p id="load-text">Insertion dans la zone…</p>
+      <div class="bar"><i id="load-bar"></i></div>
+    </div>
+  </div>
+
+  <div id="pause" class="hidden screen dim">
+    <div class="panel pause-panel">
+      <h2>Pause</h2>
+      <button id="resume" class="primary">Reprendre</button>
+      <div class="settings">
+        <label>Distance de vue <output id="o-dist"></output><input type="range" id="s-dist" min="3" max="12" step="1"></label>
+        <label>Sensibilité <output id="o-sens"></output><input type="range" id="s-sens" min="0.2" max="3" step="0.1"></label>
+        <label>Champ de vision <output id="o-fov"></output><input type="range" id="s-fov" min="55" max="100" step="1"></label>
+        <label>Volume <output id="o-vol"></output><input type="range" id="s-vol" min="0" max="1" step="0.05"></label>
+        <label class="check"><input type="checkbox" id="s-music"> Musique</label>
+        <label class="check"><input type="checkbox" id="s-bob"> Balancement de la vue</label>
+        <label class="check"><input type="checkbox" id="s-lowres"> Mode performance (demi-résolution)</label>
+      </div>
+      <button id="quit">Quitter vers le menu</button>
+    </div>
+  </div>
+
+  <div id="disconnected" class="hidden screen dim">
+    <div class="center-box">
+      <h1>Connexion perdue</h1>
+      <p>Le serveur ne répond plus.</p>
+      <button class="primary" onclick="location.reload()">Retour au menu</button>
+    </div>
+  </div>
+
+  <div id="error" class="hidden screen dim"><div class="center-box"><h1>Oups</h1><p id="error-text"></p></div></div>
+
+  <div id="rotate"><div><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M20 14a8 8 0 0 1-6 7"/></svg><p>Tournez l'appareil en mode paysage</p></div></div>
+
+  <script type="module" src="js/client/main.js"></script>
+</body>
+</html>

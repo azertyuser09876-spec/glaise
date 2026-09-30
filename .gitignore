@@ -1,0 +1,18 @@
+# Node portable (dossier ou fichier « node ») : non versionné, la compilation GitHub télécharge Node elle-même
+/node
+/node.exe
+/node_modules/
+/package-lock.json
+
+# Compilation et sauvegardes locales
+/dist/
+/monde.json
+/monde.json.tmp
+*.log
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/

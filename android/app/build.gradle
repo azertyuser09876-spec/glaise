@@ -1,0 +1,43 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'fr.glaise.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'fr.glaise.app'
+        minSdk 26
+        targetSdk 34
+        // numéro de compilation GitHub : chaque nouvelle version s'installe par-dessus l'ancienne
+        versionCode Integer.parseInt(System.getenv('GITHUB_RUN_NUMBER') ?: '1')
+        versionName '1.0'
+    }
+
+    // Clé de signature fixe, volontairement publique : usage privé entre amis.
+    signingConfigs {
+        amis {
+            storeFile file('glaise-amis.p12')
+            storePassword 'glaise-amis'
+            keyAlias 'glaise'
+            keyPassword 'glaise-amis'
+            storeType 'pkcs12'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.amis
+        }
+        debug {
+            signingConfig signingConfigs.amis
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
